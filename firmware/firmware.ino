@@ -47,13 +47,13 @@ void loop() {
 
   //Tuning of PID constants using potentiometers
   //The values are mapped to get to a range of between 0 and 255 to lie between -10 and 10
-//  Kp = map(analogRead(A0), 0, 1023, -10 , 10); 
-//  Ki = map(analogRead(A1), 0, 1023, -10 , 10); 
-//  Kd = map(analogRead(A2), 0, 1023, -10 , 10); 
+  Kp = map(analogRead(A0), 0, 1023, -10 , 10); 
+  Ki = map(analogRead(A1), 0, 1023, -10 , 10); 
+  Kd = map(analogRead(A2), 0, 1023, -10 , 10); 
 
-  Kp = analogRead(A0)/100;
-  Ki = analogRead(A1)/100;
-  Kd = analogRead(A2)/100;
+//  Kp = analogRead(A0)/100;
+//  Ki = analogRead(A1)/100;
+//  Kd = analogRead(A2)/100;
 
   
   Serial.print(Kp);
