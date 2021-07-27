@@ -55,7 +55,7 @@ void loop() {
 //  Ki = analogRead(A1)/100;
 //  Kd = analogRead(A2)/100;
 
-  
+  //DEBUGGING
   Serial.print(Kp);
   Serial.print("<--Kp----Ki-->");
   Serial.print(Ki);
@@ -63,22 +63,32 @@ void loop() {
   Serial.print(Kd);
   Serial.print("<Kd---");
   Serial.println();
+
+  
   errorX = -1*setPoint + angleX;
   X = (Kp + Ki*t + Kd/t)*errorX;
+
+  //DEBUGGING
   Serial.print("X");
   Serial.print(angleX);
   Serial.print("----------");
   Serial.println(X);
+
+  
   if(X <= 0) X = 0;
   if(X >= 180) X = 180;
   servoX.write(X);
 
   
   errorY = (-1*setPoint + angleY);
+
+  //DEBUGGING
   Serial.print("Y");
   Serial.print(angleY);
   Serial.print("----------");
   Serial.println(Y);
+
+  
   if(Y <= 0) X = 0;
   if(Y >= 180) X = 180;
   Y = (Kp + Ki*t + Kd/t)*errorY;
