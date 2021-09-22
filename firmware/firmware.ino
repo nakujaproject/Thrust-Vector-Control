@@ -1,104 +1,73 @@
 #include <MPU6050_tockn.h>
-#include <Servo.h>
 #include <Wire.h>
+#include <Servo.h>
 
-//Creating MPU object
-MPU6050 mpu(Wire);
-
-//Servos to gimbal the thrust vector
 Servo servoX;
 Servo servoY;
+MPU6050 mpu(Wire);
 
-//Variables that hold the angles recorded by the IMU
-float angleX;
-float angleY;
-float angleZ;
+double kp = 2;
+double ki = 5;
+double kd = 1 ;
 
-//PID constants manual tuning
-float Kp = 3.50;
-float Ki = 0.0;
-float Kd = 0.5;
-
-
-long timer = 0;
-long previousMillis = 0;
-long t;
-
-float X, Y;
-
-float setPoint = 0.00;
-float errorX;
-float errorY;
-
-void setup() {
-  Serial.begin(9600);
-  servoX.attach(9);
-  Wire.begin();
-  mpu.begin();
-  mpu.calcGyroOffsets(true);
+unsigned long currentTime, previousTime;
+double elapsedTime;
+double error;
+double lastError;
+double cumError, rateError;
+double setPointX, setPointY;
+double inputX, inputY, outputX, outputY;
+ 
+void setup(){
+        servoX.attach(9);
+        servoY.attach(10);
+        Wire.begin();
+        mpu.begin();
+        mpu.calcGyroOffsets(true);
+        setPointX = 0;                          //desired set point for X angle
+        setPointY = 0;                          //desired set point for Y angle
+}    
+ 
+void loop(){
+        inputX = mpu.getAngleX();                //read from rotary encoder connected to A0
+        inputY = mpu.getAngleY();
+        outputX = computePIDX(inputX);
+        outputY = computePIDY(inputY);
+        delay(10);
+        servoX.write(outputX);                //control the motor based on PID value
+        servoY.write(outputY);
+ 
+}
+ 
+double computePIDX(double inp){     
+        currentTime = millis();                //get current time
+        elapsedTime = (double)(currentTime - previousTime);        //compute time elapsed from previous computation
+        
+        error = setPointX - inputX;                                // determine error
+        cumError += error * elapsedTime;                // compute integral
+        rateError = (error - lastError)/elapsedTime;   // compute derivative
+ 
+        double out = kp*error + ki*cumError + kd*rateError;                //PID output               
+ 
+        lastError = error;                                //remember current error
+        previousTime = currentTime;                        //remember current time
+ 
+        return out;                                        //have function return the PID output
 }
 
-void loop() {
-  timer = (millis()/1000);
-  
-  mpu.update();
-  angleX = mpu.getAngleX();
-  angleY = mpu.getAngleY();
-  angleZ = mpu.getAngleZ();
 
-  //Tuning of PID constants using potentiometers
-  //The values are mapped to get to a range of between 0 and 255 to lie between -10 and 10
-//  Kp = map(analogRead(A0), 0, 1023, -10 , 10); 
-//  Ki = map(analogRead(A1), 0, 1023, -10 , 10); 
-//  Kd = map(analogRead(A2), 0, 1023, -10 , 10); 
-
-//  Kp = analogRead(A0)/100;
-//  Ki = analogRead(A1)/100;
-//  Kd = analogRead(A2)/100;
-
-  //DEBUGGING
-//  Serial.print(Kp);
-//  Serial.print("<--Kp----Ki-->");
-//  Serial.print(Ki);
-//  Serial.print("<---Ki---Kd-->");
-//  Serial.print(Kd);
-//  Serial.print("<Kd---");
-//  Serial.println();
-
-  
-  errorX = -1*setPoint + angleX;
-  X = (Kp + Ki*t + Kd/t)*errorX;
-
-//  //DEBUGGING
-//  Serial.print("X");
-//  Serial.print(angleX);
-//  Serial.print("----------");
-//  Serial.println(X);
-
-  
-  if(X <= 0) X = 0;
-  if(X >= 180) X = 180;
-  servoX.write(X);
-
-  
-  errorY = (-1*setPoint + angleY);
-
-  //DEBUGGING
-//  Serial.print("Y");
-//  Serial.print(angleY);
-//  Serial.print("----------");
-//  Serial.println(Y);
-
-  
-  if(Y <= 0) X = 0;
-  if(Y >= 180) X = 180;
-  Y = (Kp + Ki*t + Kd/t)*errorY;
-  servoY.write(Y);
-
-  delay(1000);
-  previousMillis = timer - previousMillis;
- // Serial.println("time =");
-  t = previousMillis;
-  //Serial.println(t);
-  timer = 0;
+double computePIDY(double inp){     
+        currentTime = millis();                //get current time
+        elapsedTime = (double)(currentTime - previousTime);        //compute time elapsed from previous computation
+        
+        error = setPointY - inputY;                                // determine error
+        cumError += error * elapsedTime;                // compute integral
+        rateError = (error - lastError)/elapsedTime;   // compute derivative
+ 
+        double out = kp*error + ki*cumError + kd*rateError;                //PID output               
+ 
+        lastError = error;                                //remember current error
+        previousTime = currentTime;                        //remember current time
+ 
+        return out;                                        //have function return the PID output
 }
