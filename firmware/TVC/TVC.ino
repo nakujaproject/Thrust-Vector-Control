@@ -4,9 +4,9 @@
 
 MPU6050 mpu6050(Wire);
 
-double kpX = 2;
-double kiX = 5;
-double kdX = 1;
+double kp = 2;
+double ki = 5;
+double kd = 1;
 
 double kpY = 2;
 double kiY = 5;
@@ -14,10 +14,10 @@ double kdY = 1;
  
 unsigned long currentTime, previousTime;
 double elapsedTime;
-double errorX, errorY;
-double lastErrorX, lastErrorY;
+double error;
+double lastError;
 double inputX, inputY, outputX, outputY, setPointX, setPointY;
-double cumErrorX, cumErrorY, rateErrorX, rateErrorY;
+double cumError, rateError;
 
 Servo servoX;
 Servo servoY;

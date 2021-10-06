@@ -6,21 +6,25 @@ Servo servoX;
 Servo servoY;
 MPU6050 mpu(Wire);
 
-double kp = 2;
-double ki = 5;
-double kd = 1 ;
+double kp = 0.2;
+double ki = 0.3;
+double kd = 0.25;  //0.25
 
-unsigned long currentTime, previousTime;
+double currentTime = 0; 
+double previousTime = 0;
 double elapsedTime;
-double error;
-double lastError;
-double cumError, rateError;
+double errorX, errorY;
+double lastErrorX, lastErrorY;
+double cumErrorX, cumErrorY, rateErrorX, rateErrorY;
 double setPointX, setPointY;
 double inputX, inputY, outputX, outputY;
  
 void setup(){
+        Serial.begin(9600);
         servoX.attach(5);
         servoY.attach(6);
+        servoX.write(93);
+        servoY.write(93);
         Wire.begin();
         mpu.begin();
         mpu.calcGyroOffsets(true);
@@ -29,45 +33,61 @@ void setup(){
 }    
  
 void loop(){
-        inputX = mpu.getAngleX();                //read from rotary encoder connected to A0
+        mpu.update();
+        currentTime = millis();
+        elapsedTime = currentTime - previousTime;
+        
+        inputX = mpu.getAngleX();                
         inputY = mpu.getAngleY();
-        outputX = computePIDX(inputX);
-        outputY = computePIDY(inputY);
-        delay(10);
-        servoX.write(outputX);                //control the motor based on PID value
-        servoY.write(outputY);
- 
-}
- 
-double computePIDX(double inp){     
-        currentTime = millis();                //get current time
-        elapsedTime = (double)(currentTime - previousTime);        //compute time elapsed from previous computation
-        
-        error = setPointX - inputX;                                // determine error
-        cumError += error * elapsedTime;                // compute integral
-        rateError = (error - lastError)/elapsedTime;   // compute derivative
- 
-        double out = kp*error + ki*cumError + kd*rateError;                //PID output               
- 
-        lastError = error;                                //remember current error
-        previousTime = currentTime;                        //remember current time
- 
-        return out;                                        //have function return the PID output
-}
+
+        errorX = inputX - setPointX;
+        errorY = setPointY - inputY;
 
 
-double computePIDY(double inp){     
-        currentTime = millis();                //get current time
-        elapsedTime = (double)(currentTime - previousTime);        //compute time elapsed from previous computation
+        cumErrorX = cumErrorX + errorX * elapsedTime;                // compute integral
+        rateErrorX = (errorX - lastErrorX)/(elapsedTime);   // compute derivative
+//        Serial.println(cumErrorX);
+//        Serial.println("elapsedTime below");
+//        Serial.println(elapsedTime);
+//        Serial.println("kd");
+//        Serial.println(kd);
+//        Serial.println("kd");
+        //kd = map(analogRead(A0), 0, 1023, -10, 15);
+        cumErrorY = cumErrorY + errorY * elapsedTime;                // compute integral
+        rateErrorY = (errorY - lastErrorY)/(elapsedTime);   // compute derivative
+ 
+        outputX = kp*errorX + ki*cumErrorX + kd*rateErrorX;                //PID output               
+ 
+        lastErrorX = errorX;                                //remember current error
+
+         
+        outputY = kp*errorY + ki*cumErrorY + kd*rateErrorY;                //PID output               
+ 
+        lastErrorY = errorY; 
         
-        error = setPointY - inputY;                                // determine error
-        cumError += error * elapsedTime;                // compute integral
-        rateError = (error - lastError)/elapsedTime;   // compute derivative
- 
-        double out = kp*error + ki*cumError + kd*rateError;                //PID output               
- 
-        lastError = error;                                //remember current error
-        previousTime = currentTime;                        //remember current time
- 
-        return out;                                        //have function return the PID output
+        
+        previousTime = currentTime;
+
+        if(outputX > 90){
+            outputX = 90;
+          }
+    
+        if(outputX < -90){
+            outputX = -90;
+          }
+    
+        if(outputY > 90){
+            outputY = 90;
+          }
+    
+        if(outputY < -90){
+            outputY = -90;
+          }
+      
+        servoX.write(outputX + 93);                
+        servoY.write(outputY + 93);
+        
+        Serial.println(mpu.getAngleX());
+        Serial.println(mpu.getAngleY());
+        Serial.println("YYY"); 
 }
